@@ -1,5 +1,7 @@
 # Titan Macros MVP Implementation Plan
 
+> Historical plan. The active implementation and remaining release gates are tracked in `docs/implementation-status.md`.
+
 > For agentic workers: REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement task-by-task. Steps use checkbox syntax.
 
 **Goal:** Build a Gastronome-first Expo app with deterministic preset plate recommendations and immutable local diary snapshots.
