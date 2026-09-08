@@ -1,0 +1,28 @@
+export const theme = {
+  color: {
+    canvas: "#F6F7F4",
+    surface: "#FFFFFF",
+    ink: "#18201C",
+    muted: "#536158",
+    divider: "#D8DED9",
+    primary: "#C95718",
+    primaryPressed: "#A84312",
+    primarySoft: "#FBE9DE",
+    confirmation: "#176B4A",
+    confirmationSoft: "#E3F2EA",
+    warning: "#805500",
+    warningSoft: "#FFF0C7",
+    danger: "#A23131",
+    dangerSoft: "#FBE8E8",
+    white: "#FFFFFF",
+  },
+  space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
+  radius: { sm: 8, md: 12, lg: 16, pill: 999 },
+  type: {
+    title: { fontSize: 30, lineHeight: 36, fontWeight: "700" as const },
+    section: { fontSize: 20, lineHeight: 25, fontWeight: "700" as const },
+    body: { fontSize: 16, lineHeight: 23, fontWeight: "400" as const },
+    label: { fontSize: 14, lineHeight: 19, fontWeight: "600" as const },
+    meta: { fontSize: 13, lineHeight: 18, fontWeight: "400" as const },
+  },
+} as const;
