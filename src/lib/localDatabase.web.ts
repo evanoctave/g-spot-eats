@@ -1,31 +1,12 @@
-import * as SQLite from "expo-sqlite";
-
 import type { DiaryEntry, DietMode, MealPeriodId, PlateSelection } from "@/types/dining";
 import type { NutritionGoals } from "@/types/nutrition";
 import { totalSelections } from "@/utils/macros";
 
-const DATABASE_NAME = "gspot-eats.db";
-let databasePromise: ReturnType<typeof SQLite.openDatabaseAsync> | null = null;
+const DIARY_KEY = "gspot-eats.diary.v1";
+const PREFERENCES_KEY = "gspot-eats.preferences.v1";
 
-async function database() {
-  databasePromise ??= SQLite.openDatabaseAsync(DATABASE_NAME);
-  const db = await databasePromise;
-  await db.execAsync(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS diary_entries (
-      id TEXT PRIMARY KEY NOT NULL,
-      menu_date TEXT NOT NULL,
-      meal_period TEXT NOT NULL,
-      logged_at TEXT NOT NULL,
-      payload TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS preferences (
-      key TEXT PRIMARY KEY NOT NULL,
-      value TEXT NOT NULL
-    );
-    PRAGMA user_version = 2;
-  `);
-  return db;
+function storage(): Storage | null {
+  return typeof globalThis.localStorage === "undefined" ? null : globalThis.localStorage;
 }
 
 function makeId() {
@@ -65,51 +46,30 @@ export function createDiaryEntry(input: {
 }
 
 export async function insertDiaryEntry(entry: DiaryEntry) {
-  const db = await database();
-  await db.runAsync(
-    "INSERT INTO diary_entries (id, menu_date, meal_period, logged_at, payload) VALUES (?, ?, ?, ?, ?)",
-    entry.id,
-    entry.menuDate,
-    entry.mealPeriod,
-    entry.loggedAt,
-    JSON.stringify(entry),
-  );
+  const current = await listDiaryEntries();
+  storage()?.setItem(DIARY_KEY, JSON.stringify([entry, ...current]));
 }
 
 export async function listDiaryEntries(): Promise<DiaryEntry[]> {
-  const db = await database();
-  const rows = await db.getAllAsync<{ payload: string }>(
-    "SELECT payload FROM diary_entries ORDER BY logged_at DESC",
-  );
-  return rows.map((row) => JSON.parse(row.payload) as DiaryEntry);
+  const value = storage()?.getItem(DIARY_KEY);
+  return value ? JSON.parse(value) as DiaryEntry[] : [];
 }
 
 export async function clearDiaryEntries() {
-  const db = await database();
-  await db.runAsync("DELETE FROM diary_entries");
+  storage()?.removeItem(DIARY_KEY);
 }
 
-export type AppPreferences = {
-  defaultDietMode: DietMode;
-  goals: NutritionGoals;
-};
-
+export type AppPreferences = { defaultDietMode: DietMode; goals: NutritionGoals };
 export const defaultPreferences: AppPreferences = {
   defaultDietMode: "balanced",
   goals: { calories: 2200, proteinGrams: 140, carbohydratesGrams: 240, fatGrams: 75 },
 };
 
 export async function getPreferences(): Promise<AppPreferences> {
-  const db = await database();
-  const row = await db.getFirstAsync<{ value: string }>("SELECT value FROM preferences WHERE key = ?", "app");
-  return row ? { ...defaultPreferences, ...(JSON.parse(row.value) as AppPreferences) } : defaultPreferences;
+  const value = storage()?.getItem(PREFERENCES_KEY);
+  return value ? { ...defaultPreferences, ...(JSON.parse(value) as AppPreferences) } : defaultPreferences;
 }
 
 export async function setPreferences(preferences: AppPreferences) {
-  const db = await database();
-  await db.runAsync(
-    "INSERT INTO preferences (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-    "app",
-    JSON.stringify(preferences),
-  );
+  storage()?.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
 }
